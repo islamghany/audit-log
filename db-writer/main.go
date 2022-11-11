@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"db-writer/api"
+	"db-writer/broker"
 	"flag"
 	"log"
 	"os"
@@ -20,9 +21,18 @@ type config struct {
 		maxIdleConns int
 		maxIdleTime  string
 	}
+	redis struct {
+		host     string
+		port     string
+		password string
+		username string
+	}
 }
 
+var ctx = context.Background()
+
 func main() {
+
 	// 1- load the env vars
 	var conf config
 
@@ -32,18 +42,28 @@ func main() {
 	flag.StringVar(&conf.db.maxIdleTime, "db-max-idle-time", "15m", "PostgreSQL max connection idle time")
 	flag.Parse()
 
-	log.Println(conf)
 	// 2- connect to the database.
+
+	broker, err := broker.NewRedisClient(conf.redis.host, conf.redis.port, conf.redis.username, conf.redis.password)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer broker.Client.Close()
 
 	db, err := openDB(conf)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// 3- open ther server and begin to listen
+	defer db.Close()
+
 	server := api.NewServer(db)
 
-	log.Fatal(server.Serve(conf.port))
+	log.Fatal(broker.Subscriber(ctx, "audit-log", func(s string) {
+		server.CreateLogHandler(s)
+	}))
+
 }
 
 func openDB(conf config) (*sql.DB, error) {
@@ -79,7 +99,9 @@ func openDB(conf config) (*sql.DB, error) {
 	// context we created above as a parameter. If the connection couldn't be
 	// established successfully within the 5 second deadline, then this will return an
 	// error.
+
 	err = db.PingContext(ctx)
+
 	if err != nil {
 		return nil, err
 	}
@@ -91,8 +113,14 @@ func openDB(conf config) (*sql.DB, error) {
 func loadEnvVars(conf *config) {
 	conf.db.dsn = os.Getenv("LOGS_DB_DSN")
 
-	conf.port = os.Getenv("PORT")
-	if conf.port == "" {
-		conf.port = "80"
+	conf.port = optionalString(os.Getenv("PORT"), "8000")
+	conf.redis.host = optionalString(os.Getenv("REDIS_HOST"), "localhost")
+	conf.redis.port = optionalString(os.Getenv("REDIS_PORT"), "6739")
+}
+
+func optionalString(s, p string) string {
+	if s == "" {
+		return p
 	}
+	return s
 }
