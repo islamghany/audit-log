@@ -37,9 +37,11 @@ func main() {
 	var conf config
 
 	loadEnvVars(&conf)
-	flag.IntVar(&conf.db.maxOpenConns, "db-max-open-conns", 25, "PostgreSQL max open connections")
-	flag.IntVar(&conf.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max idle connections")
-	flag.StringVar(&conf.db.maxIdleTime, "db-max-idle-time", "15m", "PostgreSQL max connection idle time")
+
+	// because the servise is write-intensive, 75(in-use and idle) connection is a good number
+	flag.IntVar(&conf.db.maxOpenConns, "db-max-open-conns", 75, "PostgreSQL max open connections")
+	flag.IntVar(&conf.db.maxIdleConns, "db-max-idle-conns", 75, "PostgreSQL max idle connections")
+	flag.StringVar(&conf.db.maxIdleTime, "db-max-idle-time", "10m", "PostgreSQL max connection idle time")
 	flag.Parse()
 
 	// 2- connect to the database.
