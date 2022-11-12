@@ -8,6 +8,8 @@ import (
 	"os"
 	"querying-logs/api"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 type config struct {
@@ -36,6 +38,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer db.Close()
 
 	// 3- open ther server and begin to listen
 	server := api.NewServer(db)
@@ -90,6 +93,6 @@ func loadEnvVars(conf *config) {
 
 	conf.port = os.Getenv("PORT")
 	if conf.port == "" {
-		conf.port = "80"
+		conf.port = "8000"
 	}
 }

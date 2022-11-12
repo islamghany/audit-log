@@ -1,12 +1,20 @@
 package api
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/julienschmidt/httprouter"
+)
 
 func (s *Server) routes() http.Handler {
+	router := httprouter.New()
 
-	mux := http.NewServeMux()
+	router.NotFound = http.HandlerFunc(s.notFoundResponse)
 
-	mux.HandleFunc("/", s.getLogsHandler)
+	router.MethodNotAllowed = http.HandlerFunc(s.methodNotAllowedResponse)
 
-	return mux
+	router.HandlerFunc(http.MethodGet, "/", s.getLogsHandler)
+	router.HandlerFunc(http.MethodGet, "/:id", s.getLogHandler)
+
+	return router
 }

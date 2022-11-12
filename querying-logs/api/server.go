@@ -4,16 +4,17 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"querying-logs/db/data"
 	"time"
 )
 
 type Server struct {
-	db *sql.DB
+	db data.Models
 }
 
 func NewServer(db *sql.DB) *Server {
 	return &Server{
-		db: db,
+		db: data.NewModels(db),
 	}
 }
 
