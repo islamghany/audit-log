@@ -122,7 +122,7 @@ func openDB(conf config) (*sql.DB, error) {
 func loadEnvVars(conf *config) {
 	conf.db.dsn = os.Getenv("LOGS_DB_DSN")
 
-	conf.port = optionalString(os.Getenv("PORT"), "8000")
+	conf.port = optionalString(os.Getenv("PORT"), "80")
 	conf.redis.host = optionalString(os.Getenv("REDIS_HOST"), "localhost")
 	conf.redis.port = optionalString(os.Getenv("REDIS_PORT"), "6739")
 }

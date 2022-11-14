@@ -96,7 +96,7 @@ func loadEnvVars(conf *config) {
 
 	conf.port = os.Getenv("PORT")
 	if conf.port == "" {
-		conf.port = "8000"
+		conf.port = "80"
 	}
 }
 
