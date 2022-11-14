@@ -1,11 +1,12 @@
 package main
 
 import (
-	"context"
+	"fmt"
 	"log"
 	"os"
 	"queue-writer/api"
 	"queue-writer/broker"
+	"time"
 )
 
 type config struct {
@@ -19,8 +20,6 @@ type config struct {
 	}
 }
 
-var ctx = context.Background()
-
 func main() {
 
 	// 1- load the env vars
@@ -30,7 +29,10 @@ func main() {
 
 	// 2- connect to the database.
 
-	broker, err := broker.NewRedisClient(conf.redis.host, conf.redis.port, conf.redis.username, conf.redis.password)
+	broker, err := Connect("Message Broker", 10, 1*time.Second, func() (*broker.RedisBroker, error) {
+		return broker.NewRedisClient(conf.redis.host, conf.redis.port, conf.redis.username, conf.redis.password)
+	})
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,7 +40,7 @@ func main() {
 	defer broker.Client.Close()
 
 	s := api.NewServer(broker)
-
+	log.Printf("Connected to server on port %s \n", conf.port)
 	log.Fatal(s.Serve(conf.port))
 
 }
@@ -55,4 +57,30 @@ func optionalString(s, p string) string {
 		return p
 	}
 	return s
+}
+
+func Connect[T any](connectName string, counts int64, backOff time.Duration, fn func() (*T, error)) (*T, error) {
+	var connection *T
+
+	for {
+		c, err := fn()
+		if err == nil {
+			log.Println("connected to: ", connectName)
+			connection = c
+			break
+		}
+
+		log.Printf("%s not yet read", connectName)
+		counts--
+		if counts == 0 {
+			return nil, fmt.Errorf("can not connect to the %s", connectName)
+		}
+		backOff = backOff + (time.Second * 2)
+
+		log.Println("Backing off.....")
+		time.Sleep(backOff)
+		continue
+
+	}
+	return connection, nil
 }

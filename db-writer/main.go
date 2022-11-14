@@ -6,6 +6,7 @@ import (
 	"db-writer/api"
 	"db-writer/broker"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -46,14 +47,20 @@ func main() {
 
 	// 2- connect to the database.
 
-	broker, err := broker.NewRedisClient(conf.redis.host, conf.redis.port, conf.redis.username, conf.redis.password)
+	broker, err := Connect("Message Broker", 10, 1*time.Second, func() (*broker.RedisBroker, error) {
+		return broker.NewRedisClient(conf.redis.host, conf.redis.port, conf.redis.username, conf.redis.password)
+	})
+
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	defer broker.Client.Close()
 
-	db, err := openDB(conf)
+	db, err := Connect("PostgreSQL", 10, 1*time.Second, func() (*sql.DB, error) {
+		return openDB(conf)
+	})
+	log.Printf("Connected to server on port %s \n", conf.port)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -125,4 +132,30 @@ func optionalString(s, p string) string {
 		return p
 	}
 	return s
+}
+
+func Connect[T any](connectName string, counts int64, backOff time.Duration, fn func() (*T, error)) (*T, error) {
+	var connection *T
+
+	for {
+		c, err := fn()
+		if err == nil {
+			log.Println("connected to: ", connectName)
+			connection = c
+			break
+		}
+
+		log.Printf("%s not yet read", connectName)
+		counts--
+		if counts == 0 {
+			return nil, fmt.Errorf("can not connect to the %s", connectName)
+		}
+		backOff = backOff + (time.Second * 2)
+
+		log.Println("Backing off.....")
+		time.Sleep(backOff)
+		continue
+
+	}
+	return connection, nil
 }
