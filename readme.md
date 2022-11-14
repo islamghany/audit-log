@@ -4,8 +4,8 @@ The service accepts event data sent by other systems and provides an HTTP endpoi
 
 ## Archtecture
 
-<div style="style:flex;justify-content:center;width:100%">
-<img src="./arch.png" alt="arch" width="50%" height="auto" />
+<div style="flex;justify-content:center;width:100%">
+<img src="./arch.jpg" alt="arch" width="50%" height="auto" />
 </div>
 ## TODO
 
