@@ -13,8 +13,8 @@ func (s *Server) routes() http.Handler {
 
 	router.MethodNotAllowed = http.HandlerFunc(s.methodNotAllowedResponse)
 
-	router.HandlerFunc(http.MethodGet, "/", s.getLogsHandler)
-	router.HandlerFunc(http.MethodGet, "/:id", s.getLogHandler)
+	router.HandlerFunc(http.MethodGet, "/api/read", s.getLogsHandler)
+	router.HandlerFunc(http.MethodGet, "/api/read/:id", s.getLogHandler)
 
 	return router
 }
