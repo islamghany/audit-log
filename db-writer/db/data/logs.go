@@ -8,7 +8,6 @@ import (
 )
 
 type Log struct {
-	ID          int64     `json:"id"`
 	CreatedAt   time.Time `json:"created_at"`
 	EventName   string    `json:"event_name"`
 	Description string    `json:"description"`

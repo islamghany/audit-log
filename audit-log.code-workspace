@@ -1,16 +1,19 @@
 {
-	"folders": [
-		{
-			"path": "project"
-		},
-		{
-			"path": "querying-logs"
-		},
-		{
-			"path": "queue-writer"
-		},
-		{
-			"path": "db-writer"
-		}
-	]
+  "folders": [
+    {
+      "path": "project"
+    },
+    {
+      "path": "querying-logs"
+    },
+    {
+      "path": "queue-writer"
+    },
+    {
+      "path": "db-writer"
+    },
+    {
+      "path": "nginx"
+    }
+  ]
 }

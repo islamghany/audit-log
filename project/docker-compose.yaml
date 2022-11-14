@@ -10,9 +10,10 @@ services:
       - "6379:6379"
     deploy:
       mode: replicated
-      replicas: 1  
+      replicas: 1
     networks:
       audit-logs-net:
+
 
   postgres:
     image: postgres:12-alpine
@@ -27,7 +28,7 @@ services:
     networks:
       audit-logs-net:
     volumes:
-      - ./db-data/postgres/:/var/lib/postgres/data
+      - ./postgres-data:/var/lib/postgresql/data
 
   db-writer:
     build:
@@ -43,7 +44,7 @@ services:
     environment:
       LOGS_DB_DSN: postgresql://root:islamghany@postgres:5432/audit-logs?sslmode=disable
       REDIS_HOST: redis
-      REDIS_PORT: 6379 
+      REDIS_PORT: 6379
     entrypoint:
       [
         "/app/wait-for.sh",
@@ -51,10 +52,11 @@ services:
         "--",
         "/app/start.sh"
       ]
-    command: [ "/app/main" ]     
+    command: [ "/app/main" ]
     networks:
       audit-logs-net:
-  
+
+
   querying-logs:
     build:
       context: ./../querying-logs
@@ -66,14 +68,13 @@ services:
     depends_on:
       - postgres
       - db-writer
-    ports:
-      - "8000:80"
     environment:
       LOGS_DB_DSN: postgresql://root:islamghany@postgres:5432/audit-logs?sslmode=disable
       PORT: 80
     networks:
-      audit-logs-net: 
-      
+      audit-logs-net:
+
+
   queue-writer:
     build:
       context: ./../queue-writer
@@ -85,8 +86,6 @@ services:
     depends_on:
       - redis
       - db-writer
-    ports:
-      - "8001:80"
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -94,6 +93,41 @@ services:
     networks:
       audit-logs-net:
 
-  
+        # caddy:
+        #   image: caddy/caddy:2.2.1-alpine
+        #   container_name: caddy-service
+        #   restart: unless-stopped
+        #   ports:
+        #     - "2019:2019"
+        #     - "80:80"
+        #     - "443:443"
+        #   depends_on:
+        #     - queue-writer
+        #     - querying-logs
+        #   volumes:
+        #     - $PWD/Caddyfile:/etc/caddy/Caddyfile
+        #     - $PWD/site:/srv
+        #     - caddy_data:/data
+        #     - caddy_config:/config
+        #   networks:
+        #     audit-logs-net:
+
+  nginx:
+    depends_on:
+      - queue-writer
+      - querying-logs
+    restart: always
+    build:
+      context: ./../nginx
+      dockerfile: ./../nginx/nginx.Dockerfile
+    ports:
+      - "3050:80"
+    networks:
+      audit-logs-net:
+volumes:
+  caddy_data:
+  caddy_config:
 networks:
   audit-logs-net:
+
+
