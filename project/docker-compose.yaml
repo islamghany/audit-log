@@ -1,0 +1,99 @@
+version: "3.3"
+
+services:
+
+  redis:
+    image: redis:7.0.4-alpine
+    restart: always
+    hostname: redis
+    ports:
+      - "6379:6379"
+    deploy:
+      mode: replicated
+      replicas: 1  
+    networks:
+      audit-logs-net:
+
+  postgres:
+    image: postgres:12-alpine
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=islamghany
+      - POSTGRES_DB=audit-logs
+    networks:
+      audit-logs-net:
+    volumes:
+      - ./db-data/postgres/:/var/lib/postgres/data
+
+  db-writer:
+    build:
+      context: ./../db-writer
+      dockerfile: ./../db-writer/db-writer.dockerfile
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      LOGS_DB_DSN: postgresql://root:islamghany@postgres:5432/audit-logs?sslmode=disable
+      REDIS_HOST: redis
+      REDIS_PORT: 6379 
+    entrypoint:
+      [
+        "/app/wait-for.sh",
+        "postgres:5432",
+        "--",
+        "/app/start.sh"
+      ]
+    command: [ "/app/main" ]     
+    networks:
+      audit-logs-net:
+  
+  querying-logs:
+    build:
+      context: ./../querying-logs
+      dockerfile: ./../querying-logs/querying-logs.dockerfile
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    depends_on:
+      - postgres
+      - db-writer
+    ports:
+      - "8000:80"
+    environment:
+      LOGS_DB_DSN: postgresql://root:islamghany@postgres:5432/audit-logs?sslmode=disable
+      PORT: 80
+    networks:
+      audit-logs-net: 
+      
+  queue-writer:
+    build:
+      context: ./../queue-writer
+      dockerfile: ./../queue-writer/queue-writer.dockerfile
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    depends_on:
+      - redis
+      - db-writer
+    ports:
+      - "8001:80"
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      PORT: 80
+    networks:
+      audit-logs-net:
+
+  
+networks:
+  audit-logs-net:
