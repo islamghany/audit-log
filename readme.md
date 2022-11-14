@@ -7,6 +7,7 @@ The service accepts event data sent by other systems and provides an HTTP endpoi
 <div style="flex;justify-content:center;width:100%">
 <img src="./arch.jpg" alt="arch" width="50%" height="auto" />
 </div>
+
 ## TODO
 
 - build the authentication service.
