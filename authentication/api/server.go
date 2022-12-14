@@ -2,8 +2,8 @@ package api
 
 import (
 	"auth/pkgs/logger"
+	"auth/utils"
 	"fmt"
-	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -11,18 +11,23 @@ import (
 type Server struct {
 	router *gin.Engine
 	logger *logger.Logger
+	config utils.Config
 }
 
 type NewServerArgs struct {
+	Logger *logger.Logger
+	Config utils.Config
 }
 
 func NewServer(args *NewServerArgs) (*Server, error) {
 
 	s := &Server{
-		logger: logger.New(os.Stdout, logger.LevelInfo),
+		logger: args.Logger,
+		config: args.Config,
 	}
 
 	s.setupRoutes()
+
 	return s, nil
 }
 

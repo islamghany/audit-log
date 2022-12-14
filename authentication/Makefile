@@ -1,17 +1,33 @@
 
+
+#-------------------------------- Database
+
+
+# Database Container
+.PHONY: db/container/run
+db/container/run:
+	@echo 'Running the postgreSQL container'
+	docker run --name audit_log_auth_db -p 5431:5432 -e POSTGRES_USER=root -e POSTGRES_DB=auth -e POSTGRES_PASSWORD=secret -d postgres:12-alpine
+
+.PHONY: db/container/stop
+db/container/stop:
+	@echo 'Stopping the postgreSQL container'
+	docker stop audit-log-auth-db
+
+.PHONY:db/container/start
+db/container/start:
+	@echo 'Starting the postgreSQL container'
+	docker start audit-log-auth-db
+
+.PHONY:db/container/remove
+db/container/remove:
+	@echo 'Removeing the postgreSQL container'
+	docker container rm audit-log-auth-db
+
+
+# Database migrations 
 .PHONY: db/migrations/new
 db/migrations/new:
 	@echo 'Creating migration files for ${name}...'
 	migrate create -seq -ext=.sql -dir=./db/migrations ${name}
 
-## db/migrations/up: apply all up database migrations
-.PHONY: db/migrations/up
-db/migrations/up:  
-	@echo 'Running up migrations...'
-	migrate -path ./db/migrations -database postgresql://root:secret@localhost:5431/logs?sslmode=disable up
-
-## db/migrations/up: apply all up database migrations
-.PHONY: db/migrations/clean
-db/migrations/clean: 
-	@echo 'Fix and force version...'
-	migrate -path ./db/migrations -database postgresql://root:secret@localhost:5431/logs?sslmode=disable force ${version}
