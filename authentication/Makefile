@@ -12,17 +12,17 @@ db/container/run:
 .PHONY: db/container/stop
 db/container/stop:
 	@echo 'Stopping the postgreSQL container'
-	docker stop audit-log-auth-db
+	docker stop audit_log_auth_db
 
 .PHONY:db/container/start
 db/container/start:
 	@echo 'Starting the postgreSQL container'
-	docker start audit-log-auth-db
+	docker start audit_log_auth_db
 
 .PHONY:db/container/remove
 db/container/remove:
 	@echo 'Removeing the postgreSQL container'
-	docker container rm audit-log-auth-db
+	docker container rm audit_log_auth_db
 
 
 # Database migrations 

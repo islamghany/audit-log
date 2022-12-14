@@ -59,5 +59,5 @@ func main() {
 		logger.PrintFatal(err, nil)
 	}
 
-	srv.Start(4000)
+	logger.PrintFatal(srv.Start(config.PORT), nil)
 }
