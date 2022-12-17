@@ -1,1 +1,8 @@
 /*/*.envrc
+node_modules
+dist
+dist-ssr
+*.local
+
+project/postgres-data/
+client/node_modules
